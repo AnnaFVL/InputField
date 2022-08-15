@@ -1,8 +1,6 @@
 package com.example.inputfield
 
 import android.os.Bundle
-import android.text.InputFilter
-import android.text.Spanned
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -13,12 +11,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.inputfield.ui.theme.InputFieldTheme
-import kotlin.text.Typography
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +27,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colors.background
                 ) {
                     // Начальное значение для поля
-                    val initialValue: Double = 123.45
+                    val initialValue = 123.45
                     // Диапазон допустимых значений
                     val minBorder = -9000000000.00
                     val maxBorder = 9000000000.00
@@ -86,20 +82,20 @@ fun DrawInputAndButton(initialValue: Double, minBorder: Double, maxBorder: Doubl
             modifier = Modifier.fillMaxWidth()
         )
         {
-            Text("Сохранить") //, style = Typography.button)
+            Text("Сохранить")
         }
     }
 }
 
 private fun checkIsDouble(source: CharSequence): Boolean {
-    val pattern = Regex("[-]?[0-9]+[.]?[0-9]*")
+    val pattern = Regex("[-]?[0-9]+[.]?[0-9]{0,4}")
     return pattern.matches(source)
 }
 
 private fun checkIsInRange(source: String, minBorder: Double, maxBorder: Double): Boolean {
     val valDouble: Double? = source.toDoubleOrNull()
     if (valDouble === null) return false
-    return (valDouble!! in minBorder..maxBorder)
+    return (valDouble in minBorder..maxBorder)
 }
 
 

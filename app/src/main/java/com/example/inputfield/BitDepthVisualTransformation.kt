@@ -13,12 +13,12 @@ class BitDepthVisualTransformation : VisualTransformation {
     private fun formatWithBitDepth(source: String): String {
 
         val currentLocale: Locale = Locale.getDefault()
-        var otherSymbols: DecimalFormatSymbols = DecimalFormatSymbols(currentLocale)
-        otherSymbols.setDecimalSeparator('.');
-        otherSymbols.setGroupingSeparator('\'');
-        var df: DecimalFormat = DecimalFormat("#,###.####", otherSymbols);
+        val otherSymbols = DecimalFormatSymbols(currentLocale)
+        otherSymbols.decimalSeparator = '.'
+        otherSymbols.groupingSeparator = '\''
+        val decimalFormat = DecimalFormat("#,###.####", otherSymbols)
 
-        return df.format(source.toDouble())
+        return decimalFormat.format(source.toDouble())
     }
 
     private fun checkIsDouble(source: String): Boolean {
@@ -36,67 +36,91 @@ class BitDepthVisualTransformation : VisualTransformation {
             override fun originalToTransformed(offset: Int): Int {
                 if (checkIsDouble(originalText)) {
                     val separators = formattedText.count { it == '\'' }
-                    return when (offset) {
-                        /*
-                        0, 1, 2 -> offset
-                        3, 4, 5, 6, 7 -> if (separators == 1) offset + 1 else offset
-                        8, 9, 10, 11 -> if (separators == 2) offset + 2 else offset + 1
-                        else -> if (separators == 3) offset + 3 else offset + 2
-
-                        8, 7 -> offset - 2
-                        6 -> if (commas == 1) 5 else 4
-                        5 -> if (commas == 1) 4 else if (commas == 2) 3 else offset
-                        4, 3 -> if (commas >= 1) offset - 1 else offset
-                        2 -> if (commas == 2) 1 else offset
-                        else -> offset
-
-                        */
-                        /*
-                        0, 1 -> offset
-                        2, 3 -> if (separators >= 1) offset + 1 else offset
-                        4, 5 -> if (separators >= 2) offset + 2 else offset + 1
-                        6, 7, 8 -> if (separators == 3) offset + 3 else offset + 2
-                        else -> 9*/
-/*
-                        0, 1 -> offset
-                        2, 3, 4 -> if (separators >= 1) offset + 1 else offset
-                        5, 6 -> if (separators >= 2) offset + 2 else offset + 1
-                        7, 8 -> if (separators == 3) offset + 3 else offset + 2
-                        else -> 9*/
-
-                        0, 1, 2 -> offset
-                        3, 4, 5 -> offset + 1
-                        6, 7, 8 -> offset + 2
-                        else -> offset + 3
-
+                    if (separators == 0) return offset
+                    else
+                    {
+                        val firstSeparatorIndex = formattedText.indexOfFirst { it == '\'' }
+                        val isPositive = originalText.toDouble() >= 0
+                        val negativeShift = if (isPositive) 0 else 1
+                        if (negativeShift == 1 && offset == 0) return offset
+                        if (separators == 1) {
+                            return when (offset) {
+                                0 + negativeShift -> offset
+                                1 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset + 1 else offset
+                                2 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset + 1 else offset
+                                else -> offset + 1
+                            }
+                        } else if (separators == 2) {
+                            return when (offset) {
+                                0 + negativeShift -> offset
+                                1 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset + 1 else offset
+                                2 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset + 1 else offset
+                                3 + negativeShift -> offset + 1
+                                4 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset + 2 else offset + 1
+                                5 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset + 2 else offset + 1
+                                else -> offset + 2
+                            }
+                        } else if (separators == 3) {
+                            return when (offset) {
+                                0 + negativeShift -> offset
+                                1 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset + 1 else offset
+                                2 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset + 1 else offset
+                                3 + negativeShift -> offset + 1
+                                4 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset + 2 else offset + 1
+                                5 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset + 2 else offset + 1
+                                6 + negativeShift -> offset + 2
+                                7 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset + 3 else offset + 2
+                                8 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset + 3 else offset + 2
+                                else -> offset + 3
+                            }
+                        }
                     }
                 }
-                    return offset
+                return offset
             }
 
                 override fun transformedToOriginal(offset: Int): Int {
                     if (checkIsDouble(originalText)) {
                         val separators = formattedText.count { it == '\'' }
-                        return when (offset) {
-/*
-                            10, 9 -> offset - 3
-                            8, 7 -> offset - 2
-                            5 -> if (separators == 1) 4 else if (separators == 2) 3 else offset
-                            4, 3 -> if (separators >= 1) offset - 1 else offset
-                            2 -> if (separators == 2) 1 else offset
-                            else -> offset*/
-/*
-                            10 -> offset - 3
-                            9, 8 -> offset - 2
-                            7, 6 -> if (separators == 1) 4 else if (separators == 2) 3 else offset
-                            5, 4 -> if (separators >= 1) offset - 1 else offset
-                            2, 3 -> if (separators == 2) 1 else offset
-                            else -> offset*/
-
-                            10, 9 -> offset - 3
-                            8, 7, 6 -> offset - 2
-                            5, 4, 3 -> offset - 1
-                            else -> offset
+                        if (separators == 0) return offset
+                        else
+                        {
+                            val firstSeparatorIndex = formattedText.indexOfFirst { it == '\'' }
+                            val isPositive = originalText.toDouble() >= 0
+                            val negativeShift = if (isPositive) 0 else 1
+                            if (offset == 0) return offset
+                            if (negativeShift == 1 && offset == 1) return offset
+                            if (separators == 1) {
+                                return when (offset) {
+                                    1 + negativeShift -> offset
+                                    2 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset - 1 else offset
+                                    3 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset - 1 else offset
+                                    else -> offset - 1
+                                }
+                            } else if (separators == 2) {
+                                return when (offset) {
+                                    1 + negativeShift -> offset
+                                    2 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset - 1 else offset
+                                    3 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset - 1 else offset
+                                    4 + negativeShift -> offset - 1
+                                    5 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset - 2 else offset - 1
+                                    6 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset - 2 else offset - 1
+                                    else -> offset - 2
+                                }
+                            } else if (separators == 3) {
+                                return when (offset) {
+                                    1 + negativeShift -> offset
+                                    2 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset - 1 else offset
+                                    3 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset - 1 else offset
+                                    4 + negativeShift -> offset - 1
+                                    5 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset - 2 else offset - 1
+                                    6 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset - 2 else offset - 1
+                                    7 + negativeShift -> offset - 2
+                                    8 + negativeShift -> if (firstSeparatorIndex == 1 + negativeShift) offset - 3 else offset - 2
+                                    9 + negativeShift -> if (firstSeparatorIndex <= 2 + negativeShift) offset - 3 else offset - 2
+                                    else -> offset - 3
+                                }
+                            }
                         }
                     }
                     return offset
