@@ -71,7 +71,16 @@ fun DrawInputAndButton(initialValue: Double, minBorder: Double, maxBorder: Doubl
 
         TextField(
             value = fieldValue,
-            onValueChange = {if (checkIsDouble(it) && checkIsInRange(it, minBorder, maxBorder)) fieldValue = it },
+            onValueChange = {
+                // variant 1: if dot is last - just remove it
+                if (checkIsDouble(it) && checkIsInRange(it, minBorder, maxBorder)) fieldValue = it.removeSuffix(".")
+
+                // variant 2: if dot is last - add some decimal digit (but with 0 - doesn't work)
+                /*if (checkIsDouble(it) && checkIsInRange(it, minBorder, maxBorder)) {
+                    if (checkIfDotIfLast(it)) fieldValue = it.replace(".", ".9", false)
+                    else fieldValue = it
+               }*/
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             visualTransformation = BitDepthVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
@@ -86,6 +95,15 @@ fun DrawInputAndButton(initialValue: Double, minBorder: Double, maxBorder: Doubl
         }
     }
 }
+
+private fun checkIfDotIfLast(currentValue: String): Boolean {
+    val lastSymbolIndex = currentValue.lastIndex
+    return if (lastSymbolIndex != -1) {
+        currentValue[lastSymbolIndex] == '.'
+    }
+    else false
+}
+
 
 private fun checkIsDouble(source: CharSequence): Boolean {
     val pattern = Regex("[-]?[0-9]+[.]?[0-9]{0,4}")
